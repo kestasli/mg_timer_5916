@@ -74,7 +74,6 @@ void loop() {
   if (!timerState) showTime(intervalEnd - intervalStart, false);
 
   delay(10);
-
 }
 
 
@@ -84,6 +83,15 @@ void relayOn() {
 }
 
 void showTime(unsigned long interval, bool count) {
+
+  /*
+A static variable is a special kind of variable; it is allocated memory 'statically'.
+Its lifetime is the entire run of the program. It is specific to a function, i.e., only the function that defined it can access it.
+However, it doesn't get destroyed after the function call ends.
+It preserves its value between successive function calls. It is created and initialized the first time a function is called.
+In the next function call, it is not created again. It just exists.
+*/
+
   //Max measurement interval is 9min, 59s, 99ms
   //Only update display if interval is less that capacity of display
   if (interval < 600000000) {
@@ -91,6 +99,12 @@ void showTime(unsigned long interval, bool count) {
     unsigned long interval_rounded = interval + 5000;
     unsigned long minutes = interval_rounded / 1000000 / 60;
     unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
+
+    unsigned long digit0 = minutes;
+    unsigned long digit1 = interval_nominutes / 10000000 % 10;
+    unsigned long digit2 = interval_nominutes / 1000000 % 10;
+    unsigned long digit3 = interval_nominutes / 100000 % 10;
+    unsigned long digit4 = interval_nominutes / 10000 % 10;
 
 
     displayArray[0] = ledDot | ledSegments[minutes];
@@ -104,12 +118,12 @@ void showTime(unsigned long interval, bool count) {
     }
 
 
-    } else {
-      displayArray[0] = ledDot | ledSegments[9];
-      displayArray[1] = ledSegments[5];
-      displayArray[2] = ledDot | ledSegments[9];
-      displayArray[3] = ledSegments[9];
-      displayArray[4] = ledSegments[9];
+  } else {
+    displayArray[0] = ledDot | ledSegments[9];
+    displayArray[1] = ledSegments[5];
+    displayArray[2] = ledDot | ledSegments[9];
+    displayArray[3] = ledSegments[9];
+    displayArray[4] = ledSegments[9];
   }
   myLED.printDirect(displayArray);
 }
