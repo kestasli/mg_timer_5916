@@ -25,7 +25,8 @@ Arduino Mini Pro -- TCL5916
 10(SS)    -- 4(LE)
 */
 
-#define Segments 5
+//#define Segments 5
+#define Segments 1
 
 #define RELAY_PIN 2
 #define COUNTER_DELAY 3000000  //shortest interval delay in us
@@ -42,17 +43,22 @@ unsigned long timePointPrev = 0;
 bool timerState = false;  //true- time counting, false- stopped
 
 //TLC591x myLED(1, 11, 13, 10);  // OE pin hard-wired low (always enabled)
-TLC591x myLED(Segments, 10);  //hardware
+//TLC591x myLED(Segments, 10);  //hardware
+TLC591x myLED(Segments, 10, 5);  //hardware
 uint8_t displayArray[Segments];
 
 int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
 int ledDot = 4;
 
 void setup() {
+  myLED.displayEnable();
+  myLED.displayBrightness(250);
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RELAY_PIN), relayOn, FALLING);
 }
+
+int i = 0;
 
 void loop() {
 
@@ -67,13 +73,8 @@ void loop() {
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
 
-  //a[0] = ledDot | ledSegments[count / 10000 % 10];
-  //a[1] = ledSegments[count / 1000 % 10];
-  //a[2] = ledDot | ledSegments[count / 100 % 10];
-  //a[3] = ledSegments[count / 10 % 10];
-  //a[3] = ledSegments[count / 1 % 10];
-
   delay(10);
+
 }
 
 
@@ -81,33 +82,6 @@ void relayOn() {
   //only grab time when relay is ON
   timePoint = micros();
 }
-
-void showTime(unsigned long interval) {
-  //Max measurement interval is 9min, 59s, 99ms
-  //Only update display if interval is less that capacity of display
-  if (interval < 600000000) {
-    //this will round up to the nearest 100ts of miliseconds
-    unsigned long interval_rounded = interval + 5000;
-    unsigned long minutes = interval_rounded / 1000000 / 60;
-    unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
-
-
-    displayArray[0] = ledDot | ledSegments[minutes];
-    displayArray[1] = ledSegments[interval_nominutes / 10000000 % 10];
-    displayArray[2] = ledDot | ledSegments[interval_nominutes / 1000000 % 10];
-    displayArray[3] = ledSegments[interval_nominutes / 100000 % 10];
-    displayArray[4] = ledSegments[interval_nominutes / 10000 % 10];
-
-  } else {
-    displayArray[0] = ledDot | ledSegments[9];
-    displayArray[1] = ledSegments[5];
-    displayArray[2] = ledDot | ledSegments[9];
-    displayArray[3] = ledSegments[9];
-    displayArray[4] = ledSegments[9];
-  }
-  myLED.printDirect(displayArray);
-}
-
 
 void showTime(unsigned long interval, bool count) {
   //Max measurement interval is 9min, 59s, 99ms
@@ -130,12 +104,12 @@ void showTime(unsigned long interval, bool count) {
     }
 
 
-  } else {
-    displayArray[0] = ledDot | ledSegments[9];
-    displayArray[1] = ledSegments[5];
-    displayArray[2] = ledDot | ledSegments[9];
-    displayArray[3] = ledSegments[9];
-    displayArray[4] = ledSegments[9];
+    } else {
+      displayArray[0] = ledDot | ledSegments[9];
+      displayArray[1] = ledSegments[5];
+      displayArray[2] = ledDot | ledSegments[9];
+      displayArray[3] = ledSegments[9];
+      displayArray[4] = ledSegments[9];
   }
   myLED.printDirect(displayArray);
 }
