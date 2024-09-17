@@ -96,6 +96,12 @@ In the next function call, it is not created again. It just exists.
   //Only update display if interval is less that capacity of display
   if (interval < 600000000) {
     //this will round up to the nearest 100ts of miliseconds
+    static unsigned long digit0_prev = 0;
+    static unsigned long digit1_prev = 0;
+    static unsigned long digit2_prev = 0;
+    static unsigned long digit3_prev = 0;
+    static unsigned long digit4_prev = 0;
+
     unsigned long interval_rounded = interval + 5000;
     unsigned long minutes = interval_rounded / 1000000 / 60;
     unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
@@ -105,7 +111,6 @@ In the next function call, it is not created again. It just exists.
     unsigned long digit2 = interval_nominutes / 1000000 % 10;
     unsigned long digit3 = interval_nominutes / 100000 % 10;
     unsigned long digit4 = interval_nominutes / 10000 % 10;
-
 
     displayArray[0] = ledDot | ledSegments[minutes];
     displayArray[1] = ledSegments[interval_nominutes / 10000000 % 10];
