@@ -26,7 +26,7 @@ Arduino Mini Pro -- TCL5916
 */
 
 //#define Segments 5
-#define Segments 1
+#define Segments 5
 
 #define RELAY_PIN 2
 #define COUNTER_DELAY 3000000  //shortest interval delay in us
@@ -51,14 +51,11 @@ int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
 int ledDot = 4;
 
 void setup() {
-  myLED.displayEnable();
-  myLED.displayBrightness(250);
+  myLED.displayBrightness(127);
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RELAY_PIN), relayOn, FALLING);
 }
-
-int i = 0;
 
 void loop() {
 
@@ -68,7 +65,6 @@ void loop() {
     if (!timerState) intervalEnd = timePoint;
     timePointPrev = timePoint;
   }
-
 
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
@@ -92,17 +88,14 @@ It preserves its value between successive function calls. It is created and init
 In the next function call, it is not created again. It just exists.
 */
 
+
   //Max measurement interval is 9min, 59s, 99ms
   //Only update display if interval is less that capacity of display
   if (interval < 600000000) {
     //this will round up to the nearest 100ts of miliseconds
-    static unsigned long digit0_prev = 0;
-    static unsigned long digit1_prev = 0;
-    static unsigned long digit2_prev = 0;
-    static unsigned long digit3_prev = 0;
-    static unsigned long digit4_prev = 0;
-
+    static unsigned long interval_rounded_prev = 0;
     unsigned long interval_rounded = interval + 5000;
+
     unsigned long minutes = interval_rounded / 1000000 / 60;
     unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
 
@@ -112,16 +105,21 @@ In the next function call, it is not created again. It just exists.
     unsigned long digit3 = interval_nominutes / 100000 % 10;
     unsigned long digit4 = interval_nominutes / 10000 % 10;
 
-    displayArray[0] = ledDot | ledSegments[minutes];
-    displayArray[1] = ledSegments[interval_nominutes / 10000000 % 10];
-    displayArray[2] = ledDot | ledSegments[interval_nominutes / 1000000 % 10];
-    displayArray[3] = ledSegments[interval_nominutes / 100000 % 10];
-    if (count) {
-      displayArray[4] = ledSegments[0];
-    } else {
-      displayArray[4] = ledSegments[interval_nominutes / 10000 % 10];
-    }
+    if (interval_rounded - interval_rounded_prev > 1000) {
+      displayArray[0] = ledSegments[digit0] | ledDot;
+      displayArray[1] = ledSegments[digit1];
+      displayArray[2] = ledSegments[digit2] | ledDot;
+      displayArray[3] = ledSegments[digit3];
 
+      if (count) {
+        displayArray[4] = ledSegments[0];
+      } else {
+        displayArray[4] = ledSegments[digit4];
+      }
+
+      myLED.printDirect(displayArray);
+    }
+    interval_rounded_prev = interval_rounded;
 
   } else {
     displayArray[0] = ledDot | ledSegments[9];
@@ -130,5 +128,4 @@ In the next function call, it is not created again. It just exists.
     displayArray[3] = ledSegments[9];
     displayArray[4] = ledSegments[9];
   }
-  myLED.printDirect(displayArray);
 }
