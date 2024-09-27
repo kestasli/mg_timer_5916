@@ -30,6 +30,8 @@ Arduino Mini Pro -- TCL5916
 
 #define RELAY_PIN 2
 #define COUNTER_DELAY 3000000  //shortest interval delay in us
+#define DIMM_DELAY 
+
 //#define DISPLAY_DELAY 12
 //delay pushing data to the LED matrix
 unsigned long previous_time = 0;  //prev timepoint for pushing tada to the display
@@ -39,6 +41,10 @@ unsigned long intervalStart = 0;
 unsigned long intervalEnd = 1;
 unsigned long timePoint = 0;
 unsigned long timePointPrev = 0;
+
+unsigned long timeDimm = 0;
+unsigned long timeDimPrev = 0;
+bool dimEnabled = false; //true- full brightness, false- dimmed
 
 bool timerState = false;  //true- time counting, false- stopped
 
@@ -66,6 +72,8 @@ void loop() {
     timePointPrev = timePoint;
   }
 
+
+
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
 
@@ -88,24 +96,24 @@ It preserves its value between successive function calls. It is created and init
 In the next function call, it is not created again. It just exists.
 */
 
+  unsigned long interval_rounded = interval + 5000;
+  static unsigned long interval_rounded_prev = 0;
+
+  unsigned long minutes = interval_rounded / 1000000 / 60;
+  unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
+
+  unsigned long digit0 = minutes;
+  unsigned long digit1 = interval_nominutes / 10000000 % 10;
+  unsigned long digit2 = interval_nominutes / 1000000 % 10;
+  unsigned long digit3 = interval_nominutes / 100000 % 10;
+  unsigned long digit4 = interval_nominutes / 10000 % 10;
 
   //Max measurement interval is 9min, 59s, 99ms
   //Only update display if interval is less that capacity of display
   if (interval < 600000000) {
     //this will round up to the nearest 100ts of miliseconds
-    static unsigned long interval_rounded_prev = 0;
-    unsigned long interval_rounded = interval + 5000;
 
-    unsigned long minutes = interval_rounded / 1000000 / 60;
-    unsigned long interval_nominutes = interval_rounded - minutes * 1000000 * 60;
-
-    unsigned long digit0 = minutes;
-    unsigned long digit1 = interval_nominutes / 10000000 % 10;
-    unsigned long digit2 = interval_nominutes / 1000000 % 10;
-    unsigned long digit3 = interval_nominutes / 100000 % 10;
-    unsigned long digit4 = interval_nominutes / 10000 % 10;
-
-    if (interval_rounded - interval_rounded_prev > 1000) {
+    if (interval_rounded > interval_rounded_prev) {
       displayArray[0] = ledSegments[digit0] | ledDot;
       displayArray[1] = ledSegments[digit1];
       displayArray[2] = ledSegments[digit2] | ledDot;
