@@ -29,13 +29,12 @@ Arduino Mini Pro -- TCL5916
 #define Segments 5
 
 #define RELAY_PIN 2
-#define COUNTER_DELAY 3000000  //shortest interval delay in us
-#define DIMM_DELAY 
-
-//#define DISPLAY_DELAY 12
-//delay pushing data to the LED matrix
-unsigned long previous_time = 0;  //prev timepoint for pushing tada to the display
-unsigned long current_time = 0;
+#define MODE_PIN 3
+#define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
+#define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
+#define DIMM_DELAY 120000         //deimm delay in miliseconds
+#define LED_DIMMED 127
+#define LED_NORMAL 0
 
 unsigned long intervalStart = 0;
 unsigned long intervalEnd = 1;
@@ -44,7 +43,7 @@ unsigned long timePointPrev = 0;
 
 unsigned long timeDimm = 0;
 unsigned long timeDimPrev = 0;
-bool dimEnabled = false; //true- full brightness, false- dimmed
+bool dimEnabled = false;  //true- full brightness, false- dimmed
 
 bool timerState = false;  //true- time counting, false- stopped
 
@@ -52,12 +51,12 @@ bool timerState = false;  //true- time counting, false- stopped
 //TLC591x myLED(Segments, 10);  //hardware
 TLC591x myLED(Segments, 10, 5);  //hardware
 uint8_t displayArray[Segments];
-
 int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
-int ledDot = 4;
+int ledDot = 4;  //code for displaying dot
+unsigned int dimmLevel = LED_NORMAL;
 
 void setup() {
-  myLED.displayBrightness(127);
+  myLED.displayBrightness(getDimLevel(dimEnabled));
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RELAY_PIN), relayOn, FALLING);
@@ -65,14 +64,17 @@ void setup() {
 
 void loop() {
 
-  if ((timePoint - timePointPrev) > COUNTER_DELAY) {
+  if ((timePoint - timePointPrev) > COUNTER_DELAY_3S) {
     timerState = !timerState;
     if (timerState) intervalStart = timePoint;
     if (!timerState) intervalEnd = timePoint;
     timePointPrev = timePoint;
   }
 
-
+  timeDimm = millis();
+  if (timeDimm - timeDimPrev > DIMM_DELAY) {
+    myLED.displayBrightness(getDimLevel(true));
+  }
 
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
@@ -84,6 +86,14 @@ void loop() {
 void relayOn() {
   //only grab time when relay is ON
   timePoint = micros();
+}
+
+unsigned int getDimLevel(bool dimmStatus) {
+  if (dimmStatus) {
+    return LED_NORMAL;
+  } else {
+    return LED_DIMMED;
+  }
 }
 
 void showTime(unsigned long interval, bool count) {
