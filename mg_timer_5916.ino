@@ -41,7 +41,7 @@ unsigned long intervalEnd = 1;
 unsigned long timePoint = 0;
 unsigned long timePointPrev = 0;
 
-unsigned long timeDimm = 0;
+unsigned long timeDim = 0;
 unsigned long timeDimPrev = 0;
 bool dimEnabled = false;  //true- full brightness, false- dimmed
 
@@ -69,15 +69,16 @@ void loop() {
     if (timerState) intervalStart = timePoint;
     if (!timerState) intervalEnd = timePoint;
     timePointPrev = timePoint;
-  }
-
-  timeDimm = millis();
-  if (timeDimm - timeDimPrev > DIMM_DELAY) {
-    myLED.displayBrightness(getDimLevel(true));
+    timeDimPrev = timeDim;
   }
 
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
+
+  timeDimm = millis();
+  if (timeDim - timeDimPrev > DIMM_DELAY) {
+    myLED.displayBrightness(getDimLevel(true));
+  }
 
   delay(10);
 }
