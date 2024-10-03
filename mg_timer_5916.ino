@@ -32,7 +32,7 @@ Arduino Mini Pro -- TCL5916
 #define MODE_PIN 3
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
-#define DIMM_DELAY 120000         //deimm delay in miliseconds
+#define DIMM_DELAY 60000         //deimm delay in miliseconds
 #define LED_DIMMED 127
 #define LED_NORMAL 0
 
@@ -53,10 +53,9 @@ TLC591x myLED(Segments, 10, 5);  //hardware
 uint8_t displayArray[Segments];
 int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
 int ledDot = 4;  //code for displaying dot
-unsigned int dimmLevel = LED_NORMAL;
 
 void setup() {
-  myLED.displayBrightness(getDimLevel(dimEnabled));
+  myLED.displayBrightness(LED_NORMAL);
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RELAY_PIN), relayOn, FALLING);
@@ -69,32 +68,26 @@ void loop() {
     if (timerState) intervalStart = timePoint;
     if (!timerState) intervalEnd = timePoint;
     timePointPrev = timePoint;
+
+    myLED.displayBrightness(LED_NORMAL);
     timeDimPrev = timeDim;
   }
 
   if (timerState) showTime(micros() - intervalStart, true);
   if (!timerState) showTime(intervalEnd - intervalStart, false);
 
-  timeDimm = millis();
+  timeDim = millis();
   if (timeDim - timeDimPrev > DIMM_DELAY) {
-    myLED.displayBrightness(getDimLevel(true));
+    myLED.displayBrightness(LED_DIMMED);
   }
 
-  delay(10);
+  delay(51);
 }
 
 
 void relayOn() {
   //only grab time when relay is ON
   timePoint = micros();
-}
-
-unsigned int getDimLevel(bool dimmStatus) {
-  if (dimmStatus) {
-    return LED_NORMAL;
-  } else {
-    return LED_DIMMED;
-  }
 }
 
 void showTime(unsigned long interval, bool count) {
@@ -136,7 +129,9 @@ In the next function call, it is not created again. It just exists.
         displayArray[4] = ledSegments[digit4];
       }
 
+      myLED.displayDisable();
       myLED.printDirect(displayArray);
+      myLED.displayEnable();
     }
     interval_rounded_prev = interval_rounded;
 
