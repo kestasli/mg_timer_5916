@@ -40,12 +40,10 @@ unsigned long intervalStart = 0;
 unsigned long intervalEnd = 1;
 unsigned long timePoint = 0;
 unsigned long timePointPrev = 0;
+bool timerState = false;  //true- time counting, false- stopped
 
 unsigned long timeDim = 0;
 unsigned long timeDimPrev = 0;
-bool dimEnabled = false;  //true- full brightness, false- dimmed
-
-bool timerState = false;  //true- time counting, false- stopped
 
 //TLC591x myLED(1, 11, 13, 10);  // OE pin hard-wired low (always enabled)
 //TLC591x myLED(Segments, 10);  //hardware
