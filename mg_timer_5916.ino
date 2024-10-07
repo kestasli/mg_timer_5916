@@ -33,7 +33,7 @@ Arduino Mini Pro -- TCL5916
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
 #define DIMM_DELAY 60000         //deimm delay in miliseconds
-#define LED_DIMMED 127
+#define LED_DIMMED 110
 #define LED_NORMAL 0
 
 unsigned long intervalStart = 0;
@@ -127,9 +127,9 @@ In the next function call, it is not created again. It just exists.
         displayArray[4] = ledSegments[digit4];
       }
 
-      myLED.displayDisable();
+      //myLED.displayDisable();
       myLED.printDirect(displayArray);
-      myLED.displayEnable();
+      //myLED.displayEnable();
     }
     interval_rounded_prev = interval_rounded;
 
@@ -139,5 +139,6 @@ In the next function call, it is not created again. It just exists.
     displayArray[2] = ledDot | ledSegments[9];
     displayArray[3] = ledSegments[9];
     displayArray[4] = ledSegments[9];
+    myLED.printDirect(displayArray);
   }
 }
