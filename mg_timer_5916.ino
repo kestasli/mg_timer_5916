@@ -32,7 +32,8 @@ Arduino Mini Pro -- TCL5916
 #define MODE_PIN 3
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
-#define DIMM_DELAY 60000         //deimm delay in miliseconds
+#define DIMM_DELAY 60000          //dimm delay in miliseconds
+#define VCC_READ_DELAY 60000      //VCC read interval
 #define LED_DIMMED 110
 #define LED_NORMAL 0
 
@@ -45,6 +46,10 @@ bool timerState = false;  //true- time counting, false- stopped
 unsigned long timeDim = 0;
 unsigned long timeDimPrev = 0;
 
+unsigned long timeVCC = 0;
+unsigned long timeVCCPrev = 0;
+
+
 //TLC591x myLED(1, 11, 13, 10);  // OE pin hard-wired low (always enabled)
 //TLC591x myLED(Segments, 10);  //hardware
 TLC591x myLED(Segments, 10, 5);  //hardware
@@ -53,6 +58,7 @@ int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
 int ledDot = 4;  //code for displaying dot
 
 void setup() {
+  Serial.begin(9600);
   myLED.displayBrightness(LED_NORMAL);
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
@@ -77,6 +83,12 @@ void loop() {
   timeDim = millis();
   if (timeDim - timeDimPrev > DIMM_DELAY) {
     myLED.displayBrightness(LED_DIMMED);
+  }
+
+  timeVCC = millis();
+  if (timeVCC - timeVCCPrev > VCC_READ_DELAY) {
+    Serial.println(readVcc());
+    timeVCCPrev = timeVCC;
   }
 
   delay(51);
@@ -141,4 +153,19 @@ In the next function call, it is not created again. It just exists.
     displayArray[4] = ledSegments[9];
     myLED.printDirect(displayArray);
   }
+}
+
+long readVcc() {
+
+  long result;
+  // Read 1.1V reference against AVcc
+  ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+  delay(2);             // Wait for Vref to settle
+  ADCSRA |= _BV(ADSC);  // Convert
+  while (bit_is_set(ADCSRA, ADSC))
+    ;
+  result = ADCL;
+  result |= ADCH << 8;
+  result = 1126400L / result;  // Back-calculate AVcc in mV
+  return result;               //Vcc in mV
 }
