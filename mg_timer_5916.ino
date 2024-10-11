@@ -34,8 +34,8 @@ Arduino Mini Pro -- TCL5916
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
 #define DIMM_DELAY 60000          //dimm delay in miliseconds
 #define VCC_READ_DELAY 60000      //VCC read interval
-#define LED_DIMMED 110
-#define LED_NORMAL 0
+#define LED_DIMMED_LEVEL 110
+#define LED_NORMAL_LEVEL 0
 
 unsigned long intervalStart = 0;
 unsigned long intervalEnd = 1;
@@ -45,6 +45,7 @@ bool timerState = false;  //true- time counting, false- stopped
 
 unsigned long timeDim = 0;
 unsigned long timeDimPrev = 0;
+bool ledBright = true;
 
 unsigned long timeVCC = 0;
 unsigned long timeVCCPrev = 0;
@@ -59,7 +60,8 @@ int ledDot = 4;  //code for displaying dot
 
 void setup() {
   Serial.begin(9600);
-  myLED.displayBrightness(LED_NORMAL);
+  myLED.displayBrightness(LED_NORMAL_LEVEL);
+  ledBright = true;
   SPI.begin();
   pinMode(RELAY_PIN, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(RELAY_PIN), relayOn, FALLING);
@@ -73,7 +75,8 @@ void loop() {
     if (!timerState) intervalEnd = timePoint;
     timePointPrev = timePoint;
 
-    myLED.displayBrightness(LED_NORMAL);
+    myLED.displayBrightness(LED_NORMAL_LEVEL);
+    ledBright = true;
     timeDimPrev = timeDim;
   }
 
@@ -82,12 +85,13 @@ void loop() {
 
   timeDim = millis();
   if (timeDim - timeDimPrev > DIMM_DELAY) {
-    myLED.displayBrightness(LED_DIMMED);
+    myLED.displayBrightness(LED_DIMMED_LEVEL);
+    ledBright = false;
   }
 
   timeVCC = millis();
   if (timeVCC - timeVCCPrev > VCC_READ_DELAY) {
-    Serial.println(readVcc());
+    if (ledBright) Serial.println(readVcc());
     timeVCCPrev = timeVCC;
   }
 
