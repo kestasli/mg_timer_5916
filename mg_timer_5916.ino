@@ -33,7 +33,7 @@ Arduino Mini Pro -- TCL5916
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
 #define DIMM_DELAY 60000          //dimm delay in miliseconds
-#define VCC_READ_DELAY 60000      //VCC read interval
+#define VCC_READ_DELAY 45000      //VCC read interval
 #define LED_DIMMED_LEVEL 110
 #define LED_NORMAL_LEVEL 0
 
