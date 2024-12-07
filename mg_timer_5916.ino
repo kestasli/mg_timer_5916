@@ -1,4 +1,10 @@
 #include <TLC591x.h>
+//#include <TimerOne.h>
+
+/*
+Frequency generator for arduino
+https://forum.arduino.cc/t/using-digitalwrite-to-create-a-square-wave-of-a-specific-frequency/463688/4
+*/
 
 //TLC591x myLED(1, SDI_pin, CLK_pin, LE_pin);          // OE pin hard-wired low (always enabled)
 /*
@@ -29,7 +35,7 @@ Arduino Mini Pro -- TCL5916
 #define Segments 5
 
 #define RELAY_PIN 2
-#define MODE_PIN 3
+#define MODE_PIN 5
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
 #define DIMM_DELAY 60000          //dimm delay in miliseconds
@@ -53,7 +59,7 @@ unsigned long timeVCCPrev = 0;
 
 //TLC591x myLED(1, 11, 13, 10);  // OE pin hard-wired low (always enabled)
 //TLC591x myLED(Segments, 10);  //hardware
-TLC591x myLED(Segments, 10, 5);  //hardware
+TLC591x myLED(Segments, 10, MODE_PIN);  //hardware
 uint8_t displayArray[Segments];
 int ledSegments[] = { 219, 3, 185, 171, 99, 234, 250, 131, 251, 235 };
 int ledDot = 4;  //code for displaying dot
@@ -68,6 +74,8 @@ void setup() {
 }
 
 void loop() {
+
+  timePointEmulator();
 
   if ((timePoint - timePointPrev) > COUNTER_DELAY_3S) {
     timerState = !timerState;
@@ -96,6 +104,35 @@ void loop() {
   }
 
   delay(51);
+}
+
+
+void timePointEmulator() {
+  static unsigned long timeScedulePrev = 0;
+  static unsigned long timeSchedule = 0;
+  static int intervalSelect = 0;
+
+  //pseudo random delays to fire timePoint, in s
+  int testSchedule[] = { 5, 10, 15, 8, 15, 9, 15 };
+
+  timeSchedule = millis();
+
+  if (timeSchedule - timeScedulePrev > (1000 * testSchedule[intervalSelect])) {
+    Serial.println(intervalSelect);
+    Serial.println(testSchedule[intervalSelect]);
+    //fire timepoint setup
+    timePoint = micros();
+    timeScedulePrev = timeSchedule;
+    intervalSelect = intervalSelect + 1;
+  }
+
+  if (intervalSelect > 6) {
+    intervalSelect = 0;
+  }
+
+  //if (intervalSelect > ((sizeof(testSchedule) / sizeof(int)) - 1)) {
+  //  intervalSelect = 0;
+  //}
 }
 
 
