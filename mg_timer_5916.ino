@@ -99,7 +99,7 @@ void loop() {
 
   timeVCC = millis();
   if (timeVCC - timeVCCPrev > VCC_READ_DELAY) {
-    if (ledNormal) Serial.println(readVcc());
+    //if (ledNormal) Serial.println(readVcc());
     timeVCCPrev = timeVCC;
   }
 
@@ -108,31 +108,30 @@ void loop() {
 
 
 void timePointEmulator() {
-  static unsigned long timeScedulePrev = 0;
-  static unsigned long timeSchedule = 0;
+  static unsigned long timeSchedulePrev = 0;
+  unsigned long timeSchedule = millis();
+
   static int intervalSelect = 0;
 
   //pseudo random delays to fire timePoint, in s
-  int testSchedule[] = { 5, 10, 15, 8, 15, 9, 15 };
+  const unsigned long testSchedule[] = { 5, 47, 15, 83, 71, 100, 24, 215, 31, 90,
+                                         82, 88, 40, 160, 48, 150, 43, 132, 37, 40,
+                                         42, 50, 57, 111, 76, 234, 17, 214, 50, 30,
+                                         90, 222, 69, 169, 41, 47, 65, 183, 14, 192,
+                                         40, 118, 47, 100, 42, 129, 28, 209, 56, 128 };
 
-  timeSchedule = millis();
-
-  if (timeSchedule - timeScedulePrev > (1000 * testSchedule[intervalSelect])) {
-    Serial.println(intervalSelect);
-    Serial.println(testSchedule[intervalSelect]);
+  if ((timeSchedule - timeSchedulePrev) > (1000 * testSchedule[intervalSelect])) {
     //fire timepoint setup
-    timePoint = micros();
-    timeScedulePrev = timeSchedule;
-    intervalSelect = intervalSelect + 1;
+    relayOn();
+    Serial.print(testSchedule[intervalSelect]);
+    Serial.println();
+    timeSchedulePrev = timeSchedule;
+    intervalSelect++;
   }
 
-  if (intervalSelect > 6) {
+  if (intervalSelect > ((sizeof(testSchedule) / sizeof(int)) - 1)) {
     intervalSelect = 0;
   }
-
-  //if (intervalSelect > ((sizeof(testSchedule) / sizeof(int)) - 1)) {
-  //  intervalSelect = 0;
-  //}
 }
 
 
