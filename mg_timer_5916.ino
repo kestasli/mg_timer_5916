@@ -1,4 +1,5 @@
 #include <TLC591x.h>
+#include <OneButton.h>
 //#include <TimerOne.h>
 
 /*
@@ -29,6 +30,11 @@ Arduino Mini Pro -- TCL5916
 13(SCK)   -- 3(CLK)
 11(MOSI)  -- 2(SDI)
 10(SS)    -- 4(LE)
+
+13(SCK)
+11(MOSI)
+10(SS)
+
 */
 
 //#define Segments 5
@@ -39,9 +45,10 @@ Arduino Mini Pro -- TCL5916
 #define COUNTER_DELAY_3S 3000000  //delay in us for regular ride
 #define COUNTER_DELAY_2S 2000000  //delay in us for rotations training
 #define DIMM_DELAY 60000          //dimm delay in miliseconds
-#define VCC_READ_DELAY 45000      //VCC read interval
+#define VCC_READ_DELAY 10000      //VCC read interval
 #define LED_DIMMED_LEVEL 110
 #define LED_NORMAL_LEVEL 0
+#define BATT_LOW_LEVEL 2900
 
 unsigned long intervalStart = 0;
 unsigned long intervalEnd = 1;
@@ -52,10 +59,10 @@ bool timerState = false;  //true- time counting, false- stopped
 unsigned long timeDim = 0;
 unsigned long timeDimPrev = 0;
 bool ledNormal = true;
+bool battLow = false;
 
 unsigned long timeVCC = 0;
 unsigned long timeVCCPrev = 0;
-
 
 //TLC591x myLED(1, 11, 13, 10);  // OE pin hard-wired low (always enabled)
 //TLC591x myLED(Segments, 10);  //hardware
@@ -75,7 +82,7 @@ void setup() {
 
 void loop() {
 
-  timePointEmulator();
+  //timePointEmulator();
 
   if ((timePoint - timePointPrev) > COUNTER_DELAY_3S) {
     timerState = !timerState;
@@ -99,45 +106,60 @@ void loop() {
 
   timeVCC = millis();
   if (timeVCC - timeVCCPrev > VCC_READ_DELAY) {
-    //if (ledNormal) Serial.println(readVcc());
+    Serial.println(readVcc());
+    if (readVcc() < BATT_LOW_LEVEL) {
+      showBattLow();
+      Serial.println("Batt Low");
+      while (true) {};
+    }
     timeVCCPrev = timeVCC;
   }
 
   delay(51);
 }
 
-
 void timePointEmulator() {
   static unsigned long timeSchedulePrev = 0;
   unsigned long timeSchedule = millis();
 
-  static int intervalSelect = 0;
+  static unsigned int intervalSelect = 0;
 
   //pseudo random delays to fire timePoint, in s
+
   const unsigned long testSchedule[] = { 5, 47, 15, 83, 71, 100, 24, 215, 31, 90,
                                          82, 88, 40, 160, 48, 150, 43, 132, 37, 40,
                                          42, 50, 57, 111, 76, 234, 17, 214, 50, 30,
                                          90, 222, 69, 169, 41, 47, 65, 183, 14, 192,
                                          40, 118, 47, 100, 42, 129, 28, 209, 56, 128 };
 
+
   if ((timeSchedule - timeSchedulePrev) > (1000 * testSchedule[intervalSelect])) {
     //fire timepoint setup
     relayOn();
-    Serial.print(testSchedule[intervalSelect]);
-    Serial.println();
+    //Serial.print(testSchedule[intervalSelect]);
+    //Serial.println();
     timeSchedulePrev = timeSchedule;
     intervalSelect++;
   }
 
-  if (intervalSelect > ((sizeof(testSchedule) / sizeof(int)) - 1)) {
+  if (intervalSelect > ((sizeof(testSchedule) / sizeof(unsigned long)) - 1)) {
     intervalSelect = 0;
   }
 }
 
-
 void relayOn() {
   //only grab time when relay is ON
   timePoint = micros();
+}
+
+
+void showBattLow() {
+  displayArray[0] = 0 | ledDot;
+  displayArray[1] = 0;
+  displayArray[2] = 0 | ledDot;
+  displayArray[3] = 0;
+  displayArray[4] = 0;
+  myLED.printDirect(displayArray);
 }
 
 void showTime(unsigned long interval, bool count) {
